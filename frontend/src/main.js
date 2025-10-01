@@ -31,3 +31,4 @@ app.use(pinia)
 
 const authStore = useAuthStore();
 authStore.initializeFromLocalStorage(); //初始化登入token
+
