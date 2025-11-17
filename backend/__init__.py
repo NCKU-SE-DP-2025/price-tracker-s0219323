@@ -8,5 +8,4 @@ dependencies.  See ``src/main.py`` for how these pieces are composed
 together.
 """
 
-# Expose the FastAPI application for convenience
-from .main import app  # noqa: F401
+

@@ -10,3 +10,4 @@ schemas used for request/response bodies are defined in
 """
 
 from .router import router  # noqa: F401
+from .models import User  # noqa: F401

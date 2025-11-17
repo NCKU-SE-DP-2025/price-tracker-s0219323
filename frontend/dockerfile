@@ -16,5 +16,8 @@ COPY . .
 # 開放容器的8080端口
 EXPOSE 8080
 
+# 設定環境變數
+ENV PYTHONPATH=/app/src
+
 # 啟動Vue開發服務器
 CMD ["npm", "run", "serve"]

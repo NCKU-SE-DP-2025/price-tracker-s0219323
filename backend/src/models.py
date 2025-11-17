@@ -11,7 +11,7 @@ upvoted.
 
 from sqlalchemy import Table, Column, Integer, ForeignKey
 
-from .database import Base
+from src.database import Base
 
 
 # Association table linking users to the news articles they have upvoted.

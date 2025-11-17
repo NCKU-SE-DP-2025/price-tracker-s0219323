@@ -32,7 +32,6 @@ from src.auth import router as auth_router
 from src.news import router as news_router
 from src.prices import router as prices_router
 from src.news.service import ensure_initial_news, schedule_fetch_news
-
 # Initialise Sentry.  Replace the DSN with your own if you want to send
 # error and performance data to Sentry.  Without a valid DSN the
 # client will be inert.

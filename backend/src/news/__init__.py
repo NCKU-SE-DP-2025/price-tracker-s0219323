@@ -6,3 +6,4 @@ exposes a router containing all news related API endpoints.
 """
 
 from .router import router  # noqa: F401
+from .models import NewsArticle  # noqa: F401
