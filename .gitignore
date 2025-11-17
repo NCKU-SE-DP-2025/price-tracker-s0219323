@@ -2,4 +2,4 @@
 __pycache__
 .env
 .venv
-backend/news_database.db
+*.db
