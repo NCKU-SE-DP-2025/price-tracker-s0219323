@@ -4,9 +4,14 @@ on:
   push:
     branches:
       - 'main'
+      - 'develop'
+      - 'fix/integration-test'
+      - 'refactor/crawler-oop-implementation'
   pull_request:
     branches:
       - 'main'
+      - 'develop'
+  workflow_dispatch:
 
 jobs:
   test:
@@ -42,7 +47,7 @@ jobs:
           pytest tests/integration --cov=src --cov-report=xml --disable-warnings
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
