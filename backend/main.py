@@ -3,8 +3,8 @@ import sentry_sdk
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi.middleware.cors import CORSMiddleware
 import itertools
-from sqlalchemy import delete, insert, select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import delete, insert, select, create_engine
+from sqlalchemy.orm import Session, sessionmaker, relationship
 from typing import List, Optional
 import requests
 from fastapi import APIRouter, HTTPException, Query, Depends, status, FastAPI
@@ -13,14 +13,14 @@ from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-
 from pydantic import BaseModel, Field, AnyHttpUrl
-from sqlalchemy import (Column, ForeignKey, Integer, String, Table, Text,
-                        create_engine)
+from sqlalchemy import (Column, ForeignKey, Integer, String, Table, Text)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from urllib.parse import quote
+from bs4 import BeautifulSoup
+from openai import OpenAI
 
-Base = declarative_base()
+# --- Database & Models Setup ---
 
 user_news_association_table = Table(
     "user_news_upvotes",
@@ -56,8 +56,8 @@ class NewsArticle(Base):
     )
 
 engine = create_engine("sqlite:///news_database.db", echo=True)
-
 Base.metadata.create_all(engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 SessionFactory = sessionmaker(bind=engine)
 
@@ -79,8 +79,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import os
-from openai import OpenAI
+class OpenAIService:
+    def __init__(self, api_key: str):
+        self.client = OpenAI(api_key=api_key)
 
 from urllib.parse import quote
 import requests
@@ -133,9 +134,9 @@ def fetch_filtered_news(is_initial=False):
         messages = [
             {
                 "role": "system",
-                "content": "你是一個關聯度評估機器人，請評估新聞標題是否與「民生用品的價格變化」相關，並給予'high'、'medium'、'low'評價。(僅需回答'high'、'medium'、'low'三個詞之一)",
+                "content": "你是一個關鍵字提取機器人，用戶將會輸入一段文字，表示其希望看見的新聞內容，請提取出用戶希望看見的關鍵字，請截取最重要的關鍵字即可，避免出現「新聞」、「資訊」等混淆搜尋引擎的字詞。(僅須回答關鍵字，若有多個關鍵字，請以空格分隔)",
             },
-            {"role": "user", "content": f"{title}"},
+            {"role": "user", "content": f"{prompt}"},
         ]
         ai_response = OpenAI(api_key="xxx").chat.completions.create(
             model="gpt-3.5-turbo",
@@ -149,6 +150,11 @@ def fetch_filtered_news(is_initial=False):
             time = soup.find("time", class_="article-content__time").text
             content_section = soup.find("section", class_="article-content__editor")
 
+            if not all([title_tag, time_tag, content_section]):
+                return None
+
+            title = title_tag.text
+            time = time_tag.text
             paragraphs = [
                 p.text
                 for p in content_section.find_all("p")
@@ -190,8 +196,8 @@ def start_scheduler():
 def shutdown_scheduler():
     scheduler.shutdown()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")
+def get_openai_service():
+    return OpenAIService(api_key=OPENAI_API_KEY)
 
 def get_db_session():
     session = Session(bind=engine)
